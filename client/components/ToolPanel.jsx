@@ -126,20 +126,26 @@ export default function ToolPanel({
     }
   }, [isSessionActive]);
 
+  if (!functionCallOutput) {
+    return null; // Don't render anything if there's no weather data
+  }
+
   return (
-    <section className="h-full w-full flex flex-col gap-4">
-      <div className="h-full bg-gray-50 rounded-md p-4">
-        <h2 className="text-lg font-bold">Weather Information</h2>
-        {isSessionActive ? (
-          functionCallOutput ? (
+    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg w-96">
+        <div className="relative">
+          <button 
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            onClick={() => setFunctionCallOutput(null)}
+          >
+            ✕
+          </button>
+          <div className="p-4">
+            <h2 className="text-lg font-bold mb-4">Weather Information</h2>
             <WeatherDisplay functionCallOutput={functionCallOutput} />
-          ) : (
-            <p>Ask about the weather for any location...</p>
-          )
-        ) : (
-          <p>Start the session to check weather information...</p>
-        )}
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

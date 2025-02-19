@@ -130,9 +130,8 @@ export default function App() {
 
   return (
     <>
-      
-      <main className="absolute top-16 left-0 right-0 bottom-0 flex">
-        <div className="flex-1 relative">
+      <main className="absolute top-16 left-0 right-0 bottom-0">
+        <div className="relative h-full">
           <div className="absolute inset-0">
             <ShaderBackground 
               isSessionActive={isSessionActive} 
@@ -154,8 +153,6 @@ export default function App() {
               />
             )}
           </div>
-        </div>
-        <div className="w-96 p-4 border-l border-gray-200">
           <ToolPanel
             isSessionActive={isSessionActive}
             sendClientEvent={sendClientEvent}
