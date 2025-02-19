@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import logo from "/assets/openai-logomark.svg";
-import EventLog from "./EventLog";
-import SessionControls from "./SessionControls";
+import ShaderBackground from "./ShaderBackground";
 import ToolPanel from "./ToolPanel";
 
 export default function App() {
@@ -40,7 +38,7 @@ export default function App() {
     await pc.setLocalDescription(offer);
 
     const baseUrl = "https://api.openai.com/v1/realtime";
-    const model = "gpt-4o-realtime-preview-2024-12-17";
+    const model = "gpt-4o-mini-realtime-preview";
     const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
       method: "POST",
       body: offer.sdp,
@@ -132,36 +130,38 @@ export default function App() {
 
   return (
     <>
-      <nav className="absolute top-0 left-0 right-0 h-16 flex items-center">
-        <div className="flex items-center gap-4 w-full m-4 pb-2 border-0 border-b border-solid border-gray-200">
-          <img style={{ width: "24px" }} src={logo} />
-          <h1>realtime console</h1>
-        </div>
-      </nav>
-      <main className="absolute top-16 left-0 right-0 bottom-0">
-        <section className="absolute top-0 left-0 right-[380px] bottom-0 flex">
-          <section className="absolute top-0 left-0 right-0 bottom-32 px-4 overflow-y-auto">
-            <EventLog events={events} />
-          </section>
-          <section className="absolute h-32 left-0 right-0 bottom-0 p-4">
-            <SessionControls
-              startSession={startSession}
-              stopSession={stopSession}
-              sendClientEvent={sendClientEvent}
-              sendTextMessage={sendTextMessage}
-              events={events}
-              isSessionActive={isSessionActive}
+      
+      <main className="absolute top-16 left-0 right-0 bottom-0 flex">
+        <div className="flex-1 relative">
+          <div className="absolute inset-0">
+            <ShaderBackground 
+              isSessionActive={isSessionActive} 
+              onClick={isSessionActive ? stopSession : startSession}
             />
-          </section>
-        </section>
-        <section className="absolute top-0 w-[380px] right-0 bottom-0 p-4 pt-0 overflow-y-auto">
+          </div>
+          <div className="absolute bottom-4 left-4 right-4">
+            {isSessionActive && (
+              <input
+                type="text"
+                className="w-full p-2 rounded bg-black/50 text-white backdrop-blur-sm"
+                placeholder="Type a message..."
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && e.target.value.trim()) {
+                    sendTextMessage(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+        <div className="w-96 p-4 border-l border-gray-200">
           <ToolPanel
-            sendClientEvent={sendClientEvent}
-            sendTextMessage={sendTextMessage}
-            events={events}
             isSessionActive={isSessionActive}
+            sendClientEvent={sendClientEvent}
+            events={events}
           />
-        </section>
+        </div>
       </main>
     </>
   );
