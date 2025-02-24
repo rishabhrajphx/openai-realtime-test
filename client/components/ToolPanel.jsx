@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const functionDescription = `
-Call this function when a user asks for weather information.
+Call this function when a user asks for weather information about any location.
 `;
 
 const sessionUpdate = {
@@ -68,10 +68,6 @@ function WeatherDisplay({ functionCallOutput }) {
           <div className="font-bold">{windSpeed} km/h</div>
         </div>
       </div>
-
-      <pre className="text-xs bg-gray-100 rounded-md p-2 overflow-x-auto">
-        {JSON.stringify(functionCallOutput, null, 2)}
-      </pre>
     </div>
   );
 }
@@ -83,7 +79,9 @@ export default function ToolPanel({
 }) {
   const [functionAdded, setFunctionAdded] = useState(false);
   const [functionCallOutput, setFunctionCallOutput] = useState(null);
-
+  const [prevTopicKeywords, setPrevTopicKeywords] = useState([]);
+  
+  // Register the weather function when the session starts
   useEffect(() => {
     if (!events || events.length === 0) return;
 
@@ -92,11 +90,18 @@ export default function ToolPanel({
       sendClientEvent(sessionUpdate);
       setFunctionAdded(true);
     }
+  }, [events, functionAdded, sendClientEvent]);
+
+  // Handle function call and auto-dismiss
+  useEffect(() => {
+    if (!events || events.length === 0) return;
 
     const mostRecentEvent = events[0];
+    
+    // Check for function calls
     if (
       mostRecentEvent.type === "response.done" &&
-      mostRecentEvent.response.output
+      mostRecentEvent.response?.output
     ) {
       mostRecentEvent.response.output.forEach((output) => {
         if (
@@ -104,12 +109,20 @@ export default function ToolPanel({
           output.name === "display_weather"
         ) {
           setFunctionCallOutput(output);
+          
+          // Auto-dismiss after 10 seconds
+          setTimeout(() => {
+            setFunctionCallOutput(null);
+          }, 10000);
+          
+          // Send follow-up to continue the conversation
           setTimeout(() => {
             sendClientEvent({
               type: "response.create",
               response: {
                 instructions: `
-                ask if they would like to know the weather for another location
+                Ask if they would like to know some fun facts about ${JSON.parse(output.arguments).location}.
+                Keep the conversation natural.
               `,
               },
             });
@@ -117,12 +130,47 @@ export default function ToolPanel({
         }
       });
     }
-  }, [events]);
+    
+    // Topic change detection
+    if (
+      mostRecentEvent.type === "conversation.item.create" &&
+      mostRecentEvent.item?.role === "user" &&
+      mostRecentEvent.item?.content?.[0]?.text
+    ) {
+      const userText = mostRecentEvent.item.content[0].text.toLowerCase();
+      const currentKeywords = userText.split(/\s+/).filter(word => 
+        word.length > 3 && !["weather", "temperature", "forecast", "climate"].includes(word)
+      );
+      
+      // If we have previous keywords to compare against
+      if (prevTopicKeywords.length > 0 && functionCallOutput) {
+        // Check if topic has changed significantly
+        const totalPrevKeywords = prevTopicKeywords.length;
+        let matchingKeywords = 0;
+        
+        currentKeywords.forEach(word => {
+          if (prevTopicKeywords.includes(word)) {
+            matchingKeywords++;
+          }
+        });
+        
+        // If less than 30% keywords match, consider it a topic change
+        if (totalPrevKeywords > 0 && matchingKeywords / totalPrevKeywords < 0.3) {
+          setFunctionCallOutput(null); // Dismiss weather display on topic change
+        }
+      }
+      
+      // Update previous keywords for next comparison
+      setPrevTopicKeywords(currentKeywords);
+    }
+  }, [events, sendClientEvent, prevTopicKeywords]);
 
+  // Reset state when session ends
   useEffect(() => {
     if (!isSessionActive) {
       setFunctionAdded(false);
       setFunctionCallOutput(null);
+      setPrevTopicKeywords([]);
     }
   }, [isSessionActive]);
 
@@ -131,8 +179,8 @@ export default function ToolPanel({
   }
 
   return (
-    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg w-96">
+    <div className="absolute top-4 right-4 z-10 animate-fade-in">
+      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg w-80">
         <div className="relative">
           <button 
             className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"

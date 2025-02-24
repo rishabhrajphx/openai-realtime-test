@@ -28,6 +28,7 @@ app.get("/token", async (req, res) => {
         body: JSON.stringify({
           model: "gpt-4o-mini-realtime-preview",
           voice: "verse",
+          instructions: "You are Mnemosyne (pronounced NEE-mo-sine). Your goal is to scratch that DEEP itch of curiosity in young minds, someone to constantly encourage you to ASK, to LEARN, and someone that is patient, personal to you, and promotes agency.",
         }),
       },
     );

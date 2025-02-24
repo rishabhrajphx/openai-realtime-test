@@ -39,7 +39,10 @@ export default function App() {
 
     const baseUrl = "https://api.openai.com/v1/realtime";
     const model = "gpt-4o-mini-realtime-preview";
-    const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+    const voice = "alloy";
+    const instructions = encodeURIComponent("You are a helpful assistant.");
+
+    const sdpResponse = await fetch(`${baseUrl}?model=${model}&voice=${voice}&instructions=${instructions}`, {
       method: "POST",
       body: offer.sdp,
       headers: {
@@ -55,6 +58,11 @@ export default function App() {
     await pc.setRemoteDescription(answer);
 
     peerConnection.current = pc;
+    
+    // Send initial response.create
+    dc.onopen = () => {
+      dc.send(JSON.stringify({ type: "response.create" }));
+    };
   }
 
   // Stop current session, clean up peer connection and data channel
@@ -63,13 +71,12 @@ export default function App() {
       dataChannel.close();
     }
 
-    peerConnection.current.getSenders().forEach((sender) => {
-      if (sender.track) {
-        sender.track.stop();
-      }
-    });
-
     if (peerConnection.current) {
+      peerConnection.current.getSenders().forEach((sender) => {
+        if (sender.track) {
+          sender.track.stop();
+        }
+      });
       peerConnection.current.close();
     }
 
